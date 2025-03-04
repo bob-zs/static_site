@@ -10,7 +10,7 @@ class TestTextNode(unittest.TestCase):
 
   def test_nodes_with_different_text_types_are_not_equal(self):
     node = TextNode("This is a text node", TextType.BOLD)
-    node2 = TextNode("This is a text node", TextType.ITALICS)
+    node2 = TextNode("This is a text node", TextType.ITALIC)
     self.assertNotEqual(node, node2)
 
   def test_nodes_with_same_urls_are_equal(self):
