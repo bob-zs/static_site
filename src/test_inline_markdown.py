@@ -149,7 +149,7 @@ class TestInlineMarkdown(unittest.TestCase):
                 "expected": [("oranges", "https://en.wikipedia.org/wiki/Orange_(fruit)")],
             },
             {
-                "text": "This is text with a [oranges](https://en.wikipedia.org/wiki/Orange_(fruit)) and [another link with a space](https://blog.boot.dev)",
+                "text": "Multiple links in this text with a [oranges](https://en.wikipedia.org/wiki/Orange_(fruit)) and [another link with a space](https://blog.boot.dev)",
                 "expected": [("oranges", "https://en.wikipedia.org/wiki/Orange_(fruit)"), ("another link with a space", "https://blog.boot.dev")],
             },
             {
@@ -185,6 +185,10 @@ class TestMarkdownLinkAndImageExtraction(unittest.TestCase):
             {
                 "text": "This is an image ![alt](https://example.com/image.jpg).",
                 "expected": [("alt", "https://example.com/image.jpg")],
+            },
+            {
+                "text": "Multiple images here with ![alt](https://example.com/image.jpg) and ![red](https://dummyimage.com/200x300/ff0000/ffffff).",
+                "expected": [("alt", "https://example.com/image.jpg"), ("red", "https://dummyimage.com/200x300/ff0000/ffffff")],
             },
             {
                 "text": "This is an image with spaces in alt text ![alt text with spaces](https://example.com/image.jpg).",
