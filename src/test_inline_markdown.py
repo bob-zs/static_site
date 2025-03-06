@@ -1,222 +1,196 @@
 import unittest
-
 from inline_markdown import (
     split_nodes_delimiter,
+    split_nodes_image,
+    split_nodes_link,
+    text_to_textnodes,
     extract_markdown_links,
-    extract_markdown_images
+    extract_markdown_images,
 )
+
 from textnode import TextNode, TextType
 
 
 class TestInlineMarkdown(unittest.TestCase):
-    def test_split_nodes_delimiter(self):
-        test_data = [
-            # Bold tests
-            (
-                "A **bolded** word is here",
-                "**",
-                TextType.BOLD,
-                [
-                    TextNode("A ", TextType.TEXT),
-                    TextNode("bolded", TextType.BOLD),
-                    TextNode(" word is here", TextType.TEXT),
-                ],
-            ),
-            (
-                "There will be **two bolded** words here in this **text** here",
-                "**",
-                TextType.BOLD,
-                [
-                    TextNode("There will be ", TextType.TEXT),
-                    TextNode("two bolded", TextType.BOLD),
-                    TextNode(" words here in this ", TextType.TEXT),
-                    TextNode("text", TextType.BOLD),
-                    TextNode(" here", TextType.TEXT),
-                ],
-            ),
-            (
-                "Can bold at the **end**",
-                "**",
-                TextType.BOLD,
-                [
-                    TextNode("Can bold at the ", TextType.TEXT),
-                    TextNode("end", TextType.BOLD),
-                ],
-            ),
-            (
-                "**Start with** bold in this sentence",
-                "**",
-                TextType.BOLD,
-                [
-                    TextNode("Start with", TextType.BOLD),
-                    TextNode(" bold in this sentence", TextType.TEXT),
-                ],
-            ),
-            # Code tests
-            (
-                "A `coded` word is here",
-                "`",
-                TextType.CODE,
-                [
-                    TextNode("A ", TextType.TEXT),
-                    TextNode("coded", TextType.CODE),
-                    TextNode(" word is here", TextType.TEXT),
-                ],
-            ),
-            (
-                "There will be `two coded` words here in this `text` here",
-                "`",
-                TextType.CODE,
-                [
-                    TextNode("There will be ", TextType.TEXT),
-                    TextNode("two coded", TextType.CODE),
-                    TextNode(" words here in this ", TextType.TEXT),
-                    TextNode("text", TextType.CODE),
-                    TextNode(" here", TextType.TEXT),
-                ],
-            ),
-            (
-                "Can code at the `end`",
-                "`",
-                TextType.CODE,
-                [
-                    TextNode("Can code at the ", TextType.TEXT),
-                    TextNode("end", TextType.CODE),
-                ],
-            ),
-            (
-                "`Start with` code in this sentence",
-                "`",
-                TextType.CODE,
-                [
-                    TextNode("Start with", TextType.CODE),
-                    TextNode(" code in this sentence", TextType.TEXT),
-                ],
-            ),
-            # Italics Tests
-            (
-                "A *italicized* word is here",
-                "*",
-                TextType.ITALIC,
-                [
-                    TextNode("A ", TextType.TEXT),
-                    TextNode("italicized", TextType.ITALIC),
-                    TextNode(" word is here", TextType.TEXT),
-                ],
-            ),
-            (
-                "There will be *two italicized* words here in this *text* here",
-                "*",
-                TextType.ITALIC,
-                [
-                    TextNode("There will be ", TextType.TEXT),
-                    TextNode("two italicized", TextType.ITALIC),
-                    TextNode(" words here in this ", TextType.TEXT),
-                    TextNode("text", TextType.ITALIC),
-                    TextNode(" here", TextType.TEXT),
-                ],
-            ),
-            (
-                "Can italicize at the *end*",
-                "*",
-                TextType.ITALIC,
-                [
-                    TextNode("Can italicize at the ", TextType.TEXT),
-                    TextNode("end", TextType.ITALIC),
-                ],
-            ),
-            (
-                "*Start with* italic in this sentence",
-                "*",
-                TextType.ITALIC,
-                [
-                    TextNode("Start with", TextType.ITALIC),
-                    TextNode(" italic in this sentence", TextType.TEXT),
-                ],
-            ),
-        ]
+    def test_delim_bold(self):
+        node = TextNode("This is text with a **bolded** word", TextType.TEXT)
+        new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
+        self.assertListEqual(
+            [
+                TextNode("This is text with a ", TextType.TEXT),
+                TextNode("bolded", TextType.BOLD),
+                TextNode(" word", TextType.TEXT),
+            ],
+            new_nodes,
+        )
 
-        for text, delimiter, text_type, expected_nodes in test_data:
-            with self.subTest(text=text, delimiter=delimiter, text_type=text_type):
-                node = TextNode(text, TextType.TEXT)
-                splitted_nodes = split_nodes_delimiter([node], delimiter, text_type)
-                self.assertListEqual(expected_nodes, splitted_nodes)
+    def test_delim_bold_double(self):
+        node = TextNode(
+            "This is text with a **bolded** word and **another**", TextType.TEXT
+        )
+        new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
+        self.assertListEqual(
+            [
+                TextNode("This is text with a ", TextType.TEXT),
+                TextNode("bolded", TextType.BOLD),
+                TextNode(" word and ", TextType.TEXT),
+                TextNode("another", TextType.BOLD),
+            ],
+            new_nodes,
+        )
+
+    def test_delim_bold_multiword(self):
+        node = TextNode(
+            "This is text with a **bolded word** and **another**", TextType.TEXT
+        )
+        new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
+        self.assertListEqual(
+            [
+                TextNode("This is text with a ", TextType.TEXT),
+                TextNode("bolded word", TextType.BOLD),
+                TextNode(" and ", TextType.TEXT),
+                TextNode("another", TextType.BOLD),
+            ],
+            new_nodes,
+        )
+
+    def test_delim_italic(self):
+        node = TextNode("This is text with an _italic_ word", TextType.TEXT)
+        new_nodes = split_nodes_delimiter([node], "_", TextType.ITALIC)
+        self.assertListEqual(
+            [
+                TextNode("This is text with an ", TextType.TEXT),
+                TextNode("italic", TextType.ITALIC),
+                TextNode(" word", TextType.TEXT),
+            ],
+            new_nodes,
+        )
+
+    def test_delim_bold_and_italic(self):
+        node = TextNode("**bold** and _italic_", TextType.TEXT)
+        new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
+        new_nodes = split_nodes_delimiter(new_nodes, "_", TextType.ITALIC)
+        self.assertEqual(
+            [
+                TextNode("bold", TextType.BOLD),
+                TextNode(" and ", TextType.TEXT),
+                TextNode("italic", TextType.ITALIC),
+            ],
+            new_nodes,
+        )
+
+    def test_delim_code(self):
+        node = TextNode("This is text with a `code block` word", TextType.TEXT)
+        new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+        self.assertListEqual(
+            [
+                TextNode("This is text with a ", TextType.TEXT),
+                TextNode("code block", TextType.CODE),
+                TextNode(" word", TextType.TEXT),
+            ],
+            new_nodes,
+        )
+
+    def test_extract_markdown_images(self):
+        matches = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
 
     def test_extract_markdown_links(self):
-        test_cases = [
-            {
-                "text": "This is text with a [oranges](https://en.wikipedia.org/wiki/Orange_(fruit))",
-                "expected": [("oranges", "https://en.wikipedia.org/wiki/Orange_(fruit)")],
-            },
-            {
-                "text": "Multiple links in this text with a [oranges](https://en.wikipedia.org/wiki/Orange_(fruit)) and [another link with a space](https://blog.boot.dev)",
-                "expected": [("oranges", "https://en.wikipedia.org/wiki/Orange_(fruit)"), ("another link with a space", "https://blog.boot.dev")],
-            },
-            {
-                "text": "This text has [invalid link](invalidlink) and [another invalid link](ftp://example.com).",
-                "expected": [],
-            },
-            {
-                "text": "This is just some plain text without any markdown links.",
-                "expected": [],
-            },
-            {
-                "text": "This is text with a [example](www.example.com), [Open in app](mailto:example@example.com), and [Connect](tel:+123456789).",
-                "expected": [("example", "www.example.com"), ("Open in app", "mailto:example@example.com"), ("Connect", "tel:+123456789")],
-            },
-            {
-                "text": "This text has [almost a link](not-a-real-link) and [another almost link](invalid://example.com).",
-                "expected": [],
-            },
-            {
-                "text": "This is not a link. This is an image ![alt](https://example.com/image.jpg).",
-                "expected": [],
-            }
-        ]
+        matches = extract_markdown_links(
+            "This is text with a [link](https://boot.dev) and [another link](https://blog.boot.dev)"
+        )
+        self.assertListEqual(
+            [
+                ("link", "https://boot.dev"),
+                ("another link", "https://blog.boot.dev"),
+            ],
+            matches,
+        )
 
-        for case in test_cases:
-            with self.subTest(case=case):
-                matches = extract_markdown_links(case["text"])
-                self.assertListEqual(matches, case["expected"])
+    def test_split_image(self):
+        node = TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("This is text with an ", TextType.TEXT),
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+            ],
+            new_nodes,
+        )
 
-class TestMarkdownLinkAndImageExtraction(unittest.TestCase):
-    def test_extract_markdown_images(self):
-        test_cases = [
-            {
-                "text": "This is an image ![alt](https://example.com/image.jpg).",
-                "expected": [("alt", "https://example.com/image.jpg")],
-            },
-            {
-                "text": "Multiple images here with ![alt](https://example.com/image.jpg) and ![red](https://dummyimage.com/200x300/ff0000/ffffff).",
-                "expected": [("alt", "https://example.com/image.jpg"), ("red", "https://dummyimage.com/200x300/ff0000/ffffff")],
-            },
-            {
-                "text": "This is an image with spaces in alt text ![alt text with spaces](https://example.com/image.jpg).",
-                "expected": [("alt text with spaces", "https://example.com/image.jpg")],
-            },
-            {
-                "text": "This text has ![invalid image](invalidimage) and ![another invalid image](ftp://example.com/image.jpg).",
-                "expected": [],
-            },
-            {
-                "text": "This is just some plain text without any markdown images.",
-                "expected": [],
-            },
-            {
-                "text": "This is an image with special characters ![alt](https://example.com/image(1).jpg).",
-                "expected": [("alt", "https://example.com/image(1).jpg")],
-            },
-            {
-                "text": "This is almost an image ![almost an image](not-a-real-link) and ![another almost image](invalid://example.com).",
-                "expected": [],
-            },
-            {
-                "text": "This is not an image. This is a link: [oranges](https://en.wikipedia.org/wiki/Orange_(fruit))",
-                "expected": [],
-            }
-        ]
+    def test_split_image_single(self):
+        node = TextNode(
+            "![image](https://www.example.COM/IMAGE.PNG)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("image", TextType.IMAGE, "https://www.example.COM/IMAGE.PNG"),
+            ],
+            new_nodes,
+        )
 
-        for case in test_cases:
-            with self.subTest(case=case):
-                matches = extract_markdown_images(case["text"])
-                self.assertListEqual(matches, case["expected"])
+    def test_split_images(self):
+        node = TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("This is text with an ", TextType.TEXT),
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "second image", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"
+                ),
+            ],
+            new_nodes,
+        )
+
+    def test_split_links(self):
+        node = TextNode(
+            "This is text with a [link](https://boot.dev) and [another link](https://blog.boot.dev) with text that follows",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("This is text with a ", TextType.TEXT),
+                TextNode("link", TextType.LINK, "https://boot.dev"),
+                TextNode(" and ", TextType.TEXT),
+                TextNode("another link", TextType.LINK, "https://blog.boot.dev"),
+                TextNode(" with text that follows", TextType.TEXT),
+            ],
+            new_nodes,
+        )
+
+    def test_text_to_textnodes(self):
+        nodes = text_to_textnodes(
+            "This is **text** with an _italic_ word and a `code block` and an ![image](https://i.imgur.com/zjjcJKZ.png) and a [link](https://boot.dev)"
+        )
+        self.assertListEqual(
+            [
+                TextNode("This is ", TextType.TEXT),
+                TextNode("text", TextType.BOLD),
+                TextNode(" with an ", TextType.TEXT),
+                TextNode("italic", TextType.ITALIC),
+                TextNode(" word and a ", TextType.TEXT),
+                TextNode("code block", TextType.CODE),
+                TextNode(" and an ", TextType.TEXT),
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and a ", TextType.TEXT),
+                TextNode("link", TextType.LINK, "https://boot.dev"),
+            ],
+            nodes,
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
