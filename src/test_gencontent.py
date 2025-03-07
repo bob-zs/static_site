@@ -11,7 +11,7 @@ class TestExtractTitle(unittest.TestCase):
     def test_eq_double(self):
         actual = extract_title(
             """
-# This is a Title
+# This is a title
 
 # This is a second title that should be ignored
 """

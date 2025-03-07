@@ -9,7 +9,7 @@ def generate_page(from_path, template_path, dest_path):
     from_file.close()
 
     template_file = open(template_path, "r")
-    template = template_path.read()
+    template = template_file.read()
     template_file.close()
 
     node = markdown_to_html_node(markdown_content)
